@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate Exam</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Generate Exam</h1>
+    <form id="examForm">
+      <div class="form-group">
+        <input type="text" class="form-control" id="chapterId" readonly >
+      </div>
+      <div class="form-group">
+        <label for="difficultyLevel">Difficulty Level:</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="Easy" id="easyCheckbox">
+          <label class="form-check-label" for="easyCheckbox">
+            Easy
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="difficult" id="difficultCheckbox">
+          <label class="form-check-label" for="difficultCheckbox">
+            Difficult
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="objective">Objective:</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="reminding" id="remindingCheckbox">
+          <label class="form-check-label" for="remindingCheckbox">
+            Reminding
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="understanding" id="understandingCheckbox">
+          <label class="form-check-label" for="understandingCheckbox">
+            Understanding
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="creativity" id="creativityCheckbox">
+          <label class="form-check-label" for="creativityCheckbox">
+            Creativity
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="totalQuestions">Total Questions:</label>
+        <input type="number" class="form-control" id="totalQuestions" min="1" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Generate</button>
+    </form>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    // Retrieve chapter ID from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const chapterIds = urlParams.get('chapters');
+
+    // Parse the chapterIds into an array of numbers
+    const chapters = chapterIds.split(',').map(Number);
+
+    // Set the chapter ID value in the form
+    const chapterIdInput = document.getElementById('chapterId');
+    chapterIdInput.value = chapters;
+
+    // Form submission event listener
+    const examForm = document.getElementById('examForm');
+    examForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      generateExam();
+    });
+
+    // Generate exam function
+    function generateExam() {
+      const difficultyLevels = [];
+      const objectives = [];
+
+      // Get the selected difficulty levels
+      if (document.getElementById('easyCheckbox').checked) {
+        difficultyLevels.push('Easy');
+      }
+      if (document.getElementById('difficultCheckbox').checked) {
+        difficultyLevels.push('difficult');
+      }
+
+      // Get the selected objectives
+      if (document.getElementById('remindingCheckbox').checked) {
+        objectives.push('reminding');
+      }
+      if (document.getElementById('understandingCheckbox').checked) {
+        objectives.push('understanding');
+      }
+      if (document.getElementById('creativityCheckbox').checked) {
+        objectives.push('creativity');
+      }
+
+      // Get the total number of questions
+      const totalQuestions =(+document.getElementById('totalQuestions').value);
+
+      // Prepare the exam data
+      const examData = {
+        chapters: chapters,
+        difficultyLevels: difficultyLevels,
+        objectives: objectives,
+        totalQuestions: totalQuestions,
+      };
+
+      // Send the exam data to the server
+      fetch('/Exam', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(examData),
+        
+      })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            console.log(JSON.stringify(examData));
+          // Redirect to the page with the exam ID
+          window.location.href = `/exam?id=${data.data.exam_id}`; 
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Course Details</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Course Details</h1>
+    <div id="courseInfo">
+      <h3>Course Name</h3>
+      <p>Number of Chapters</p>
+    </div>
+    <h2>Chapters</h2>
+    <ul class="list-group" id="chapterList">
+      <!-- Chapter items will be dynamically added here -->
+    </ul>
+    <button class="btn btn-primary mt-3" id="addChapterBtn">Add New Chapter</button>
+    <button class="btn btn-success mt-3" id="generateExamBtn" disabled>Generate Exam</button>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    // Get the course ID from the URL query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const courseId = urlParams.get('id');
+
+    // Fetch course details and chapters on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      getCourseDetails();
+      getCourseChapters();
+    });
+
+    // Fetch course details from the server
+    function getCourseDetails() {
+      fetch(`/Course/${courseId}`)
+        .then(response => response.json())
+        .then(data => {
+          const courseInfo = document.getElementById('courseInfo');
+          courseInfo.innerHTML = `
+            <h3>${data.data.courseName}</h3>
+            <p>${data.data.numberOfChapters}</p>
+          `;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+
+    // Fetch course chapters from the server
+    function getCourseChapters() {
+      fetch(`/CourseChapters/${courseId}`)
+        .then(response => response.json())
+        .then(data => {
+          const chapterList = document.getElementById('chapterList');
+          chapterList.innerHTML = '';
+
+          data.data.forEach(chapter => {
+            const listItem = document.createElement('li');
+            listItem.className = 'list-group-item';
+            listItem.innerHTML = `
+              <div class="d-flex justify-content-between align-items-center">
+                <span>${chapter.chapterNumber}</span>
+                <div>
+                  <input type="checkbox" class="form-check-input chapter-checkbox" value="${chapter._id}">
+                  <button class="btn btn-primary" onclick="addQuestions('${chapter._id}')">Add Questions</button>
+                  <button class="btn btn-primary" onclick="viewQuestions('${chapter._id}')">View Questions</button>
+                </div>
+              </div>
+            `;
+            chapterList.appendChild(listItem);
+          });
+
+          // Enable/disable "Generate Exam" button based on checkbox selection
+          const generateExamBtn = document.getElementById('generateExamBtn');
+          const chapterCheckboxes = document.querySelectorAll('.chapter-checkbox');
+
+          chapterCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+              const checkedCheckboxes = document.querySelectorAll('.chapter-checkbox:checked');
+              generateExamBtn.disabled = checkedCheckboxes.length === 0;
+            });
+          });
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+
+    function viewQuestions(chapterId) {
+      window.location.href = `/viewQuestions?id=${chapterId}`;
+    }
+
+    // Add chapter button event listener
+    const addChapterBtn = document.getElementById('addChapterBtn');
+    addChapterBtn.addEventListener('click', () => {
+      // Perform any actions you need when the "Add New Chapter" button is clicked
+      // For example, show a modal or redirect to a form page to add a new chapter
+    });
+
+    // Generate exam button event listener
+    const generateExamBtn = document.getElementById('generateExamBtn');
+    generateExamBtn.addEventListener('click', () => {
+      const checkedCheckboxes = document.querySelectorAll('.chapter-checkbox:checked');
+      const chapterIds = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
+      const queryParams = new URLSearchParams({
+        chapters: chapterIds.join(',')
+      });
+      window.location.href = `/generateExam?${queryParams}`;
+    });
+
+    function checkNumQuestions(chapterId) {
+      fetch(`/QuestionNum/${chapterId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.data.length < 12) {
+            return true;
+          } else {
+            return false;
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+
+    // Function to add questions to a chapter
+    function addQuestions(chapterId) {
+      // Fetch chapter questions from the server
+      fetch(`/ChapterQuestions/${chapterId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.data && data.data.length < 12) {
+            window.location.href = `/addQuestion?id=${chapterId}`;
+          } else {
+            alert("You have reached the maximum number of questions for this chapter");
+          }
+          console.log(data);
+        })
+        .catch(error => {
+          window.location.href = `/addQuestion?id=${chapterId}`;
+          console.error('Error:', error);
+        });
+    }
+
+  </script>
+</body>
+
+</html>

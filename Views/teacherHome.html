@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Home</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Teacher Home</h1>
+    <h2>Courses</h2>
+    <ul class="list-group" id="courseList">
+      <!-- Course items will be dynamically added here -->
+    </ul>
+    <button class="btn btn-primary mt-3" id="addCourseBtn">Add Course</button>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    // Fetch course list on page load
+    document.addEventListener('DOMContentLoaded', getCourses);
+
+    // Fetch courses from the server
+    function getCourses() {
+      fetch('/Courses')
+        .then(response => response.json())
+        .then(data => {
+          const courseList = document.getElementById('courseList');
+          courseList.innerHTML = '';
+
+          data.data.forEach(course => {
+           const listItem = document.createElement('li');
+            listItem.className = 'list-group-item';
+            listItem.innerHTML = `
+              <div class="d-flex justify-content-between align-items-center">
+                <span>${course.courseName}</span>
+                <div>
+                  <a href="course.html?id=${course._id}" class="btn btn-primary mr-2">View Course</a>
+                  <button class="btn btn-danger" onclick="deleteCourse('${course._id}')">Delete Course</button>
+                </div>
+              </div>
+            `;
+            courseList.appendChild(listItem);
+          });
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+
+    // Function to delete a course
+    function deleteCourse(courseId) {
+      if (confirm('Are you sure you want to delete this course?')) {
+        fetch(`/Course/${courseId}`, {
+          method: 'DELETE'
+        })
+          .then(response => response.json())
+          .then(data => {
+            console.log('Course deleted:', data);
+            // Refresh the course list after successful deletion
+            getCourses();
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
+      }
+    }
+
+    // Add course button event listener
+    const addCourseBtn = document.getElementById('addCourseBtn');
+    addCourseBtn.addEventListener('click', () => {
+      // Perform any actions you need when the "Add Course" button is clicked
+      // For example, show a modal or redirect to a form page to add a new course
+    });
+  </script>
+</body>
+
+</html>
